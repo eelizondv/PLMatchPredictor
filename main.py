@@ -18,7 +18,7 @@ matches["date"] = pd.to_datetime(matches["Date"])
 matches["h/a"] = matches["Home"].astype("category").cat.codes
 matches["opp"] = matches["Away"].astype("category").cat.codes
 matches["day"] = matches["date"].dt.dayofweek
-matches["target"] = matches["FTR"].map({"H": 2, "D": 1, "A": 0})
+matches["target"] = (matches["FTR"] == "H").astype("int")
 
 # add recent form feature
 matches['home_form'] = matches.groupby('Home')['target'].transform(lambda x: x.rolling(5, min_periods=1).mean())
@@ -115,8 +115,8 @@ preds = stacking_clf.predict(test[predictors])
 
 # evaluate model
 accuracy = accuracy_score(test["target"], preds)
-report = classification_report(test["target"], preds, target_names=['Loss', 'Draw', 'Win'])
-precision = precision_score(test["target"], preds, average=None)
+report = classification_report(test["target"], preds, target_names=['Loss/Draw', 'Win'])
+precision = precision_score(test["target"], preds)
 
 print(f"Accuracy: {accuracy}")
 print(f"Precision: {precision}")
@@ -166,7 +166,7 @@ def predict_match(home_team, away_team):
     
     stacking_clf = joblib.load(model_path)
     prediction = stacking_clf.predict(input_data)[0]
-    result_mapping = {2: 'Win', 1: 'Draw', 0: 'Loss'}
+    result_mapping = {1: 'Home Win', 0: 'Loss/Draw'}
     return result_mapping[prediction]
 
 # Example usage
