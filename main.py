@@ -128,14 +128,6 @@ rf_importances = best_rf.feature_importances_
 features = predictors
 indices = np.argsort(rf_importances)[::-1]
 
-# plot feature importances
-plt.figure()
-plt.title("Feature importances")
-plt.bar(range(len(features)), rf_importances[indices], align="center")
-plt.xticks(range(len(features)), [features[i] for i in indices], rotation=90)
-plt.xlim([-1, len(features)])
-plt.show()
-
 # function to predict the outcome of a single match
 def predict_match(home_team, away_team):
     home_encoder = joblib.load('models/home_encoder.pkl')
