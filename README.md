@@ -43,3 +43,7 @@ To run the code, you need to have the following libraries installed:
 - **joblib**: For saving and loading trained models and encoders
 - **matplotlib**: For plotting data
 - **seaborn**: For plot styling
+
+## Thanks!
+
+Thanks for taking the time to check this project out! If you have any improvements that could be made please feel free to reach out!
