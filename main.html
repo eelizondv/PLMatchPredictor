@@ -7485,7 +7485,7 @@ a.anchor-link {
 <h1 id="English-Premier-League-Match-Outcome-Prediction">English Premier League Match Outcome Prediction<a class="anchor-link" href="#English-Premier-League-Match-Outcome-Prediction">¶</a></h1><h2 id="Introduction">Introduction<a class="anchor-link" href="#Introduction">¶</a></h2><h3 id="Problem-Contextualization">Problem Contextualization<a class="anchor-link" href="#Problem-Contextualization">¶</a></h3><p>Predicting the outcome of sports matches has always been a challenging problem in the field of artificial intelligence and machine learning. There are many variables that go into making a prediction, such as team performance, player conditions, and external factors.</p>
 <p>This project focuses on predicting the outcome of specific matches in the English Premier League (PL). The PL is arguably the most competitive football league in the world, attracting a massive pool of talented players. The season runs from August until May, where 20 teams compete in a league format to accumulate the most points throughout their 38-game campaign and lift the prestigious title.</p>
 <h3 id="Motivation-for-AI-Use">Motivation for AI Use<a class="anchor-link" href="#Motivation-for-AI-Use">¶</a></h3><p>The primary motivation for employing AI in predicting match outcomes is to harness the power of data-driven decision-making. Traditional methods of forecasting match results, often based on expert opinion or simple statistics, can be subjective and limited in scope. Machine learning models, particularly ensemble methods which we'll use in this project, can leverage vast amounts of historical data to identify complex patterns and interactions between variables, providing more accurate and reliable predictions. These models can be particularly useful for fans, analysts, and sport bettors by increasing their capacity to make informed predictions.</p>
-<h2 id="Dataset">Dataset<a class="anchor-link" href="#Dataset">¶</a></h2><p>The dataset used in this project is comprised of the historical data of PL matches from the 1993 season up until the 2023 season, stored in a CSV file named <code>premier-league-matches.csv</code>.</p>
+<h3 id="Dataset">Dataset<a class="anchor-link" href="#Dataset">¶</a></h3><p>The dataset used in this project is comprised of the historical data of PL matches from the 1993 season up until the 2023 season, stored in a CSV file named <code>premier-league-matches.csv</code>.</p>
 <p>This dataset was downloaded from Kaggle and can be found <a href="https://www.kaggle.com/datasets/evangower/premier-league-matches-19922022?select=premier-league-matches.csv">here</a>.</p>
 <p>The dataset includes the following attributes:</p>
 <ul>
@@ -7509,12 +7509,15 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Requirements">Requirements<a class="anchor-link" href="#Requirements">¶</a></h2><p>To run the code, you need to have the following libraries installed:</p>
+<h3 id="Requirements">Requirements<a class="anchor-link" href="#Requirements">¶</a></h3><p>To run the code, you need to have the following libraries installed:</p>
 <ul>
 <li><strong>pandas</strong>: For data manipulation and analysis</li>
+<li><strong>numpy</strong>: For mathematical functions</li>
 <li><strong>scikit-learn (sklearn)</strong>: For machine learning models and utilities</li>
 <li><strong>xgboost</strong>: For the eXtreme Gradient Boosting algorithm</li>
 <li><strong>joblib</strong>: For saving and loading trained models and encoders</li>
+<li><strong>matplotlib</strong>: For plotting data</li>
+<li><strong>seaborn</strong>: For plot styling</li>
 </ul>
 </div>
 </div>
@@ -7529,11 +7532,12 @@ a.anchor-link {
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span><span class="p">,</span> <span class="n">GridSearchCV</span><span class="p">,</span> <span class="n">cross_val_score</span>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span><span class="p">,</span> <span class="n">GridSearchCV</span><span class="p">,</span> <span class="n">cross_val_score</span><span class="p">,</span> <span class="n">learning_curve</span>
 <span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">LabelEncoder</span>
 <span class="kn">from</span> <span class="nn">sklearn.ensemble</span> <span class="kn">import</span> <span class="n">RandomForestClassifier</span><span class="p">,</span> <span class="n">StackingClassifier</span>
 <span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">LogisticRegression</span>
-<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">accuracy_score</span><span class="p">,</span> <span class="n">classification_report</span><span class="p">,</span> <span class="n">precision_score</span><span class="p">,</span> <span class="n">confusion_matrix</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">accuracy_score</span><span class="p">,</span> <span class="n">classification_report</span><span class="p">,</span> <span class="n">precision_score</span><span class="p">,</span> <span class="n">confusion_matrix</span><span class="p">,</span> <span class="n">roc_curve</span><span class="p">,</span> <span class="n">auc</span><span class="p">,</span> <span class="n">precision_recall_curve</span>
+<span class="kn">from</span> <span class="nn">sklearn.calibration</span> <span class="kn">import</span> <span class="n">calibration_curve</span>
 <span class="kn">from</span> <span class="nn">xgboost</span> <span class="kn">import</span> <span class="n">XGBClassifier</span>
 <span class="kn">import</span> <span class="nn">joblib</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
@@ -7624,7 +7628,7 @@ a.anchor-link {
     <span class="n">matches</span> <span class="o">=</span> <span class="n">matches</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">'date'</span><span class="p">)</span>
     <span class="n">h2h_wins</span><span class="p">,</span> <span class="n">h2h_draws</span><span class="p">,</span> <span class="n">h2h_losses</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
     
-    <span class="c1"># Initialize a dictionary to store past match results</span>
+    <span class="c1"># initialize dictionary to store past match results</span>
     <span class="n">past_results</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">matches</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
@@ -7635,12 +7639,12 @@ a.anchor-link {
         <span class="k">if</span> <span class="p">(</span><span class="n">home_team</span><span class="p">,</span> <span class="n">away_team</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">past_results</span><span class="p">:</span>
             <span class="n">past_results</span><span class="p">[(</span><span class="n">home_team</span><span class="p">,</span> <span class="n">away_team</span><span class="p">)]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'wins'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">'draws'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">'losses'</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
         
-        <span class="c1"># Append the current stats before updating</span>
+        <span class="c1"># append the current stats before updating</span>
         <span class="n">h2h_wins</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">past_results</span><span class="p">[(</span><span class="n">home_team</span><span class="p">,</span> <span class="n">away_team</span><span class="p">)][</span><span class="s1">'wins'</span><span class="p">])</span>
         <span class="n">h2h_draws</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">past_results</span><span class="p">[(</span><span class="n">home_team</span><span class="p">,</span> <span class="n">away_team</span><span class="p">)][</span><span class="s1">'draws'</span><span class="p">])</span>
         <span class="n">h2h_losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">past_results</span><span class="p">[(</span><span class="n">home_team</span><span class="p">,</span> <span class="n">away_team</span><span class="p">)][</span><span class="s1">'losses'</span><span class="p">])</span>
         
-        <span class="c1"># Update the past results</span>
+        <span class="c1"># update the past results</span>
         <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s1">'FTR'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'H'</span><span class="p">:</span>
             <span class="n">past_results</span><span class="p">[(</span><span class="n">home_team</span><span class="p">,</span> <span class="n">away_team</span><span class="p">)][</span><span class="s1">'wins'</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">elif</span> <span class="n">row</span><span class="p">[</span><span class="s1">'FTR'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'D'</span><span class="p">:</span>
@@ -8027,7 +8031,7 @@ Percentage of Away Wins: 28.36%
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
 <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[ ]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
-<style>#sk-container-id-1 {color: black;background-color: white;}#sk-container-id-1 pre{padding: 0;}#sk-container-id-1 div.sk-toggleable {background-color: white;}#sk-container-id-1 label.sk-toggleable__label {cursor: pointer;display: block;width: 100%;margin-bottom: 0;padding: 0.3em;box-sizing: border-box;text-align: center;}#sk-container-id-1 label.sk-toggleable__label-arrow:before {content: "▸";float: left;margin-right: 0.25em;color: #696969;}#sk-container-id-1 label.sk-toggleable__label-arrow:hover:before {color: black;}#sk-container-id-1 div.sk-estimator:hover label.sk-toggleable__label-arrow:before {color: black;}#sk-container-id-1 div.sk-toggleable__content {max-height: 0;max-width: 0;overflow: hidden;text-align: left;background-color: #f0f8ff;}#sk-container-id-1 div.sk-toggleable__content pre {margin: 0.2em;color: black;border-radius: 0.25em;background-color: #f0f8ff;}#sk-container-id-1 input.sk-toggleable__control:checked~div.sk-toggleable__content {max-height: 200px;max-width: 100%;overflow: auto;}#sk-container-id-1 input.sk-toggleable__control:checked~label.sk-toggleable__label-arrow:before {content: "▾";}#sk-container-id-1 div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-1 div.sk-label input.sk-toggleable__control:checked~label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-1 input.sk-hidden--visually {border: 0;clip: rect(1px 1px 1px 1px);clip: rect(1px, 1px, 1px, 1px);height: 1px;margin: -1px;overflow: hidden;padding: 0;position: absolute;width: 1px;}#sk-container-id-1 div.sk-estimator {font-family: monospace;background-color: #f0f8ff;border: 1px dotted black;border-radius: 0.25em;box-sizing: border-box;margin-bottom: 0.5em;}#sk-container-id-1 div.sk-estimator:hover {background-color: #d4ebff;}#sk-container-id-1 div.sk-parallel-item::after {content: "";width: 100%;border-bottom: 1px solid gray;flex-grow: 1;}#sk-container-id-1 div.sk-label:hover label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-1 div.sk-serial::before {content: "";position: absolute;border-left: 1px solid gray;box-sizing: border-box;top: 0;bottom: 0;left: 50%;z-index: 0;}#sk-container-id-1 div.sk-serial {display: flex;flex-direction: column;align-items: center;background-color: white;padding-right: 0.2em;padding-left: 0.2em;position: relative;}#sk-container-id-1 div.sk-item {position: relative;z-index: 1;}#sk-container-id-1 div.sk-parallel {display: flex;align-items: stretch;justify-content: center;background-color: white;position: relative;}#sk-container-id-1 div.sk-item::before, #sk-container-id-1 div.sk-parallel-item::before {content: "";position: absolute;border-left: 1px solid gray;box-sizing: border-box;top: 0;bottom: 0;left: 50%;z-index: -1;}#sk-container-id-1 div.sk-parallel-item {display: flex;flex-direction: column;z-index: 1;position: relative;background-color: white;}#sk-container-id-1 div.sk-parallel-item:first-child::after {align-self: flex-end;width: 50%;}#sk-container-id-1 div.sk-parallel-item:last-child::after {align-self: flex-start;width: 50%;}#sk-container-id-1 div.sk-parallel-item:only-child::after {width: 0;}#sk-container-id-1 div.sk-dashed-wrapped {border: 1px dashed gray;margin: 0 0.4em 0.5em 0.4em;box-sizing: border-box;padding-bottom: 0.4em;background-color: white;}#sk-container-id-1 div.sk-label label {font-family: monospace;font-weight: bold;display: inline-block;line-height: 1.2em;}#sk-container-id-1 div.sk-label-container {text-align: center;}#sk-container-id-1 div.sk-container {/* jupyter's `normalize.less` sets `[hidden] { display: none; }` but bootstrap.min.css set `[hidden] { display: none !important; }` so we also need the `!important` here to be able to override the default hidden behavior on the sphinx rendered scikit-learn.org. See: https://github.com/scikit-learn/scikit-learn/issues/21755 */display: inline-block !important;position: relative;}#sk-container-id-1 div.sk-text-repr-fallback {display: none;}</style><div class="sk-top-container" id="sk-container-id-1"><div class="sk-text-repr-fallback"><pre>XGBClassifier(base_score=None, booster=None, callbacks=None,
+<style>#sk-container-id-3 {color: black;background-color: white;}#sk-container-id-3 pre{padding: 0;}#sk-container-id-3 div.sk-toggleable {background-color: white;}#sk-container-id-3 label.sk-toggleable__label {cursor: pointer;display: block;width: 100%;margin-bottom: 0;padding: 0.3em;box-sizing: border-box;text-align: center;}#sk-container-id-3 label.sk-toggleable__label-arrow:before {content: "▸";float: left;margin-right: 0.25em;color: #696969;}#sk-container-id-3 label.sk-toggleable__label-arrow:hover:before {color: black;}#sk-container-id-3 div.sk-estimator:hover label.sk-toggleable__label-arrow:before {color: black;}#sk-container-id-3 div.sk-toggleable__content {max-height: 0;max-width: 0;overflow: hidden;text-align: left;background-color: #f0f8ff;}#sk-container-id-3 div.sk-toggleable__content pre {margin: 0.2em;color: black;border-radius: 0.25em;background-color: #f0f8ff;}#sk-container-id-3 input.sk-toggleable__control:checked~div.sk-toggleable__content {max-height: 200px;max-width: 100%;overflow: auto;}#sk-container-id-3 input.sk-toggleable__control:checked~label.sk-toggleable__label-arrow:before {content: "▾";}#sk-container-id-3 div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-3 div.sk-label input.sk-toggleable__control:checked~label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-3 input.sk-hidden--visually {border: 0;clip: rect(1px 1px 1px 1px);clip: rect(1px, 1px, 1px, 1px);height: 1px;margin: -1px;overflow: hidden;padding: 0;position: absolute;width: 1px;}#sk-container-id-3 div.sk-estimator {font-family: monospace;background-color: #f0f8ff;border: 1px dotted black;border-radius: 0.25em;box-sizing: border-box;margin-bottom: 0.5em;}#sk-container-id-3 div.sk-estimator:hover {background-color: #d4ebff;}#sk-container-id-3 div.sk-parallel-item::after {content: "";width: 100%;border-bottom: 1px solid gray;flex-grow: 1;}#sk-container-id-3 div.sk-label:hover label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-3 div.sk-serial::before {content: "";position: absolute;border-left: 1px solid gray;box-sizing: border-box;top: 0;bottom: 0;left: 50%;z-index: 0;}#sk-container-id-3 div.sk-serial {display: flex;flex-direction: column;align-items: center;background-color: white;padding-right: 0.2em;padding-left: 0.2em;position: relative;}#sk-container-id-3 div.sk-item {position: relative;z-index: 1;}#sk-container-id-3 div.sk-parallel {display: flex;align-items: stretch;justify-content: center;background-color: white;position: relative;}#sk-container-id-3 div.sk-item::before, #sk-container-id-3 div.sk-parallel-item::before {content: "";position: absolute;border-left: 1px solid gray;box-sizing: border-box;top: 0;bottom: 0;left: 50%;z-index: -1;}#sk-container-id-3 div.sk-parallel-item {display: flex;flex-direction: column;z-index: 1;position: relative;background-color: white;}#sk-container-id-3 div.sk-parallel-item:first-child::after {align-self: flex-end;width: 50%;}#sk-container-id-3 div.sk-parallel-item:last-child::after {align-self: flex-start;width: 50%;}#sk-container-id-3 div.sk-parallel-item:only-child::after {width: 0;}#sk-container-id-3 div.sk-dashed-wrapped {border: 1px dashed gray;margin: 0 0.4em 0.5em 0.4em;box-sizing: border-box;padding-bottom: 0.4em;background-color: white;}#sk-container-id-3 div.sk-label label {font-family: monospace;font-weight: bold;display: inline-block;line-height: 1.2em;}#sk-container-id-3 div.sk-label-container {text-align: center;}#sk-container-id-3 div.sk-container {/* jupyter's `normalize.less` sets `[hidden] { display: none; }` but bootstrap.min.css set `[hidden] { display: none !important; }` so we also need the `!important` here to be able to override the default hidden behavior on the sphinx rendered scikit-learn.org. See: https://github.com/scikit-learn/scikit-learn/issues/21755 */display: inline-block !important;position: relative;}#sk-container-id-3 div.sk-text-repr-fallback {display: none;}</style><div class="sk-top-container" id="sk-container-id-3"><div class="sk-text-repr-fallback"><pre>XGBClassifier(base_score=None, booster=None, callbacks=None,
               colsample_bylevel=None, colsample_bynode=None,
               colsample_bytree=None, early_stopping_rounds=None,
               enable_categorical=False, eval_metric=None, feature_types=None,
@@ -8037,7 +8041,7 @@ Percentage of Away Wins: 28.36%
               max_delta_step=None, max_depth=None, max_leaves=None,
               min_child_weight=None, missing=nan, monotone_constraints=None,
               n_estimators=100, n_jobs=None, num_parallel_tree=None,
-              predictor=None, random_state=None, ...)</pre><b>In a Jupyter environment, please rerun this cell to show the HTML representation or trust the notebook. <br/>On GitHub, the HTML representation is unable to render, please try loading this page with nbviewer.org.</b></div><div class="sk-container" hidden=""><div class="sk-item"><div class="sk-estimator sk-toggleable"><input checked="" class="sk-toggleable__control sk-hidden--visually" id="sk-estimator-id-1" type="checkbox"/><label class="sk-toggleable__label sk-toggleable__label-arrow" for="sk-estimator-id-1">XGBClassifier</label><div class="sk-toggleable__content"><pre>XGBClassifier(base_score=None, booster=None, callbacks=None,
+              predictor=None, random_state=None, ...)</pre><b>In a Jupyter environment, please rerun this cell to show the HTML representation or trust the notebook. <br/>On GitHub, the HTML representation is unable to render, please try loading this page with nbviewer.org.</b></div><div class="sk-container" hidden=""><div class="sk-item"><div class="sk-estimator sk-toggleable"><input checked="" class="sk-toggleable__control sk-hidden--visually" id="sk-estimator-id-6" type="checkbox"/><label class="sk-toggleable__label sk-toggleable__label-arrow" for="sk-estimator-id-6">XGBClassifier</label><div class="sk-toggleable__content"><pre>XGBClassifier(base_score=None, booster=None, callbacks=None,
               colsample_bylevel=None, colsample_bynode=None,
               colsample_bytree=None, early_stopping_rounds=None,
               enable_categorical=False, eval_metric=None, feature_types=None,
@@ -8090,7 +8094,7 @@ Percentage of Away Wins: 28.36%
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
 <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[ ]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
-<style>#sk-container-id-2 {color: black;background-color: white;}#sk-container-id-2 pre{padding: 0;}#sk-container-id-2 div.sk-toggleable {background-color: white;}#sk-container-id-2 label.sk-toggleable__label {cursor: pointer;display: block;width: 100%;margin-bottom: 0;padding: 0.3em;box-sizing: border-box;text-align: center;}#sk-container-id-2 label.sk-toggleable__label-arrow:before {content: "▸";float: left;margin-right: 0.25em;color: #696969;}#sk-container-id-2 label.sk-toggleable__label-arrow:hover:before {color: black;}#sk-container-id-2 div.sk-estimator:hover label.sk-toggleable__label-arrow:before {color: black;}#sk-container-id-2 div.sk-toggleable__content {max-height: 0;max-width: 0;overflow: hidden;text-align: left;background-color: #f0f8ff;}#sk-container-id-2 div.sk-toggleable__content pre {margin: 0.2em;color: black;border-radius: 0.25em;background-color: #f0f8ff;}#sk-container-id-2 input.sk-toggleable__control:checked~div.sk-toggleable__content {max-height: 200px;max-width: 100%;overflow: auto;}#sk-container-id-2 input.sk-toggleable__control:checked~label.sk-toggleable__label-arrow:before {content: "▾";}#sk-container-id-2 div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-2 div.sk-label input.sk-toggleable__control:checked~label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-2 input.sk-hidden--visually {border: 0;clip: rect(1px 1px 1px 1px);clip: rect(1px, 1px, 1px, 1px);height: 1px;margin: -1px;overflow: hidden;padding: 0;position: absolute;width: 1px;}#sk-container-id-2 div.sk-estimator {font-family: monospace;background-color: #f0f8ff;border: 1px dotted black;border-radius: 0.25em;box-sizing: border-box;margin-bottom: 0.5em;}#sk-container-id-2 div.sk-estimator:hover {background-color: #d4ebff;}#sk-container-id-2 div.sk-parallel-item::after {content: "";width: 100%;border-bottom: 1px solid gray;flex-grow: 1;}#sk-container-id-2 div.sk-label:hover label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-2 div.sk-serial::before {content: "";position: absolute;border-left: 1px solid gray;box-sizing: border-box;top: 0;bottom: 0;left: 50%;z-index: 0;}#sk-container-id-2 div.sk-serial {display: flex;flex-direction: column;align-items: center;background-color: white;padding-right: 0.2em;padding-left: 0.2em;position: relative;}#sk-container-id-2 div.sk-item {position: relative;z-index: 1;}#sk-container-id-2 div.sk-parallel {display: flex;align-items: stretch;justify-content: center;background-color: white;position: relative;}#sk-container-id-2 div.sk-item::before, #sk-container-id-2 div.sk-parallel-item::before {content: "";position: absolute;border-left: 1px solid gray;box-sizing: border-box;top: 0;bottom: 0;left: 50%;z-index: -1;}#sk-container-id-2 div.sk-parallel-item {display: flex;flex-direction: column;z-index: 1;position: relative;background-color: white;}#sk-container-id-2 div.sk-parallel-item:first-child::after {align-self: flex-end;width: 50%;}#sk-container-id-2 div.sk-parallel-item:last-child::after {align-self: flex-start;width: 50%;}#sk-container-id-2 div.sk-parallel-item:only-child::after {width: 0;}#sk-container-id-2 div.sk-dashed-wrapped {border: 1px dashed gray;margin: 0 0.4em 0.5em 0.4em;box-sizing: border-box;padding-bottom: 0.4em;background-color: white;}#sk-container-id-2 div.sk-label label {font-family: monospace;font-weight: bold;display: inline-block;line-height: 1.2em;}#sk-container-id-2 div.sk-label-container {text-align: center;}#sk-container-id-2 div.sk-container {/* jupyter's `normalize.less` sets `[hidden] { display: none; }` but bootstrap.min.css set `[hidden] { display: none !important; }` so we also need the `!important` here to be able to override the default hidden behavior on the sphinx rendered scikit-learn.org. See: https://github.com/scikit-learn/scikit-learn/issues/21755 */display: inline-block !important;position: relative;}#sk-container-id-2 div.sk-text-repr-fallback {display: none;}</style><div class="sk-top-container" id="sk-container-id-2"><div class="sk-text-repr-fallback"><pre>StackingClassifier(estimators=[('rf',
+<style>#sk-container-id-4 {color: black;background-color: white;}#sk-container-id-4 pre{padding: 0;}#sk-container-id-4 div.sk-toggleable {background-color: white;}#sk-container-id-4 label.sk-toggleable__label {cursor: pointer;display: block;width: 100%;margin-bottom: 0;padding: 0.3em;box-sizing: border-box;text-align: center;}#sk-container-id-4 label.sk-toggleable__label-arrow:before {content: "▸";float: left;margin-right: 0.25em;color: #696969;}#sk-container-id-4 label.sk-toggleable__label-arrow:hover:before {color: black;}#sk-container-id-4 div.sk-estimator:hover label.sk-toggleable__label-arrow:before {color: black;}#sk-container-id-4 div.sk-toggleable__content {max-height: 0;max-width: 0;overflow: hidden;text-align: left;background-color: #f0f8ff;}#sk-container-id-4 div.sk-toggleable__content pre {margin: 0.2em;color: black;border-radius: 0.25em;background-color: #f0f8ff;}#sk-container-id-4 input.sk-toggleable__control:checked~div.sk-toggleable__content {max-height: 200px;max-width: 100%;overflow: auto;}#sk-container-id-4 input.sk-toggleable__control:checked~label.sk-toggleable__label-arrow:before {content: "▾";}#sk-container-id-4 div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-4 div.sk-label input.sk-toggleable__control:checked~label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-4 input.sk-hidden--visually {border: 0;clip: rect(1px 1px 1px 1px);clip: rect(1px, 1px, 1px, 1px);height: 1px;margin: -1px;overflow: hidden;padding: 0;position: absolute;width: 1px;}#sk-container-id-4 div.sk-estimator {font-family: monospace;background-color: #f0f8ff;border: 1px dotted black;border-radius: 0.25em;box-sizing: border-box;margin-bottom: 0.5em;}#sk-container-id-4 div.sk-estimator:hover {background-color: #d4ebff;}#sk-container-id-4 div.sk-parallel-item::after {content: "";width: 100%;border-bottom: 1px solid gray;flex-grow: 1;}#sk-container-id-4 div.sk-label:hover label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-4 div.sk-serial::before {content: "";position: absolute;border-left: 1px solid gray;box-sizing: border-box;top: 0;bottom: 0;left: 50%;z-index: 0;}#sk-container-id-4 div.sk-serial {display: flex;flex-direction: column;align-items: center;background-color: white;padding-right: 0.2em;padding-left: 0.2em;position: relative;}#sk-container-id-4 div.sk-item {position: relative;z-index: 1;}#sk-container-id-4 div.sk-parallel {display: flex;align-items: stretch;justify-content: center;background-color: white;position: relative;}#sk-container-id-4 div.sk-item::before, #sk-container-id-4 div.sk-parallel-item::before {content: "";position: absolute;border-left: 1px solid gray;box-sizing: border-box;top: 0;bottom: 0;left: 50%;z-index: -1;}#sk-container-id-4 div.sk-parallel-item {display: flex;flex-direction: column;z-index: 1;position: relative;background-color: white;}#sk-container-id-4 div.sk-parallel-item:first-child::after {align-self: flex-end;width: 50%;}#sk-container-id-4 div.sk-parallel-item:last-child::after {align-self: flex-start;width: 50%;}#sk-container-id-4 div.sk-parallel-item:only-child::after {width: 0;}#sk-container-id-4 div.sk-dashed-wrapped {border: 1px dashed gray;margin: 0 0.4em 0.5em 0.4em;box-sizing: border-box;padding-bottom: 0.4em;background-color: white;}#sk-container-id-4 div.sk-label label {font-family: monospace;font-weight: bold;display: inline-block;line-height: 1.2em;}#sk-container-id-4 div.sk-label-container {text-align: center;}#sk-container-id-4 div.sk-container {/* jupyter's `normalize.less` sets `[hidden] { display: none; }` but bootstrap.min.css set `[hidden] { display: none !important; }` so we also need the `!important` here to be able to override the default hidden behavior on the sphinx rendered scikit-learn.org. See: https://github.com/scikit-learn/scikit-learn/issues/21755 */display: inline-block !important;position: relative;}#sk-container-id-4 div.sk-text-repr-fallback {display: none;}</style><div class="sk-top-container" id="sk-container-id-4"><div class="sk-text-repr-fallback"><pre>StackingClassifier(estimators=[('rf',
                                 RandomForestClassifier(class_weight='balanced',
                                                        min_samples_leaf=4,
                                                        random_state=1)),
@@ -8117,7 +8121,7 @@ Percentage of Away Wins: 28.36%
                                               n_estimators=100, n_jobs=None,
                                               num_parallel_tree=None,
                                               predictor=None, random_state=None, ...))],
-                   final_estimator=LogisticRegression())</pre><b>In a Jupyter environment, please rerun this cell to show the HTML representation or trust the notebook. <br/>On GitHub, the HTML representation is unable to render, please try loading this page with nbviewer.org.</b></div><div class="sk-container" hidden=""><div class="sk-item sk-dashed-wrapped"><div class="sk-label-container"><div class="sk-label sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="sk-estimator-id-2" type="checkbox"/><label class="sk-toggleable__label sk-toggleable__label-arrow" for="sk-estimator-id-2">StackingClassifier</label><div class="sk-toggleable__content"><pre>StackingClassifier(estimators=[('rf',
+                   final_estimator=LogisticRegression())</pre><b>In a Jupyter environment, please rerun this cell to show the HTML representation or trust the notebook. <br/>On GitHub, the HTML representation is unable to render, please try loading this page with nbviewer.org.</b></div><div class="sk-container" hidden=""><div class="sk-item sk-dashed-wrapped"><div class="sk-label-container"><div class="sk-label sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="sk-estimator-id-7" type="checkbox"/><label class="sk-toggleable__label sk-toggleable__label-arrow" for="sk-estimator-id-7">StackingClassifier</label><div class="sk-toggleable__content"><pre>StackingClassifier(estimators=[('rf',
                                 RandomForestClassifier(class_weight='balanced',
                                                        min_samples_leaf=4,
                                                        random_state=1)),
@@ -8144,8 +8148,8 @@ Percentage of Away Wins: 28.36%
                                               n_estimators=100, n_jobs=None,
                                               num_parallel_tree=None,
                                               predictor=None, random_state=None, ...))],
-                   final_estimator=LogisticRegression())</pre></div></div></div><div class="sk-serial"><div class="sk-item"><div class="sk-parallel"><div class="sk-parallel-item"><div class="sk-item"><div class="sk-label-container"><div class="sk-label sk-toggleable"><label>rf</label></div></div><div class="sk-serial"><div class="sk-item"><div class="sk-estimator sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="sk-estimator-id-3" type="checkbox"/><label class="sk-toggleable__label sk-toggleable__label-arrow" for="sk-estimator-id-3">RandomForestClassifier</label><div class="sk-toggleable__content"><pre>RandomForestClassifier(class_weight='balanced', min_samples_leaf=4,
-                       random_state=1)</pre></div></div></div></div></div></div><div class="sk-parallel-item"><div class="sk-item"><div class="sk-label-container"><div class="sk-label sk-toggleable"><label>xgb</label></div></div><div class="sk-serial"><div class="sk-item"><div class="sk-estimator sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="sk-estimator-id-4" type="checkbox"/><label class="sk-toggleable__label sk-toggleable__label-arrow" for="sk-estimator-id-4">XGBClassifier</label><div class="sk-toggleable__content"><pre>XGBClassifier(base_score=None, booster=None, callbacks=None,
+                   final_estimator=LogisticRegression())</pre></div></div></div><div class="sk-serial"><div class="sk-item"><div class="sk-parallel"><div class="sk-parallel-item"><div class="sk-item"><div class="sk-label-container"><div class="sk-label sk-toggleable"><label>rf</label></div></div><div class="sk-serial"><div class="sk-item"><div class="sk-estimator sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="sk-estimator-id-8" type="checkbox"/><label class="sk-toggleable__label sk-toggleable__label-arrow" for="sk-estimator-id-8">RandomForestClassifier</label><div class="sk-toggleable__content"><pre>RandomForestClassifier(class_weight='balanced', min_samples_leaf=4,
+                       random_state=1)</pre></div></div></div></div></div></div><div class="sk-parallel-item"><div class="sk-item"><div class="sk-label-container"><div class="sk-label sk-toggleable"><label>xgb</label></div></div><div class="sk-serial"><div class="sk-item"><div class="sk-estimator sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="sk-estimator-id-9" type="checkbox"/><label class="sk-toggleable__label sk-toggleable__label-arrow" for="sk-estimator-id-9">XGBClassifier</label><div class="sk-toggleable__content"><pre>XGBClassifier(base_score=None, booster=None, callbacks=None,
               colsample_bylevel=None, colsample_bynode=None,
               colsample_bytree=None, early_stopping_rounds=None,
               enable_categorical=False, eval_metric=None, feature_types=None,
@@ -8155,7 +8159,7 @@ Percentage of Away Wins: 28.36%
               max_delta_step=None, max_depth=None, max_leaves=None,
               min_child_weight=None, missing=nan, monotone_constraints=None,
               n_estimators=100, n_jobs=None, num_parallel_tree=None,
-              predictor=None, random_state=None, ...)</pre></div></div></div></div></div></div></div></div><div class="sk-item"><div class="sk-parallel"><div class="sk-parallel-item"><div class="sk-item"><div class="sk-label-container"><div class="sk-label sk-toggleable"><label>final_estimator</label></div></div><div class="sk-serial"><div class="sk-item"><div class="sk-estimator sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="sk-estimator-id-5" type="checkbox"/><label class="sk-toggleable__label sk-toggleable__label-arrow" for="sk-estimator-id-5">LogisticRegression</label><div class="sk-toggleable__content"><pre>LogisticRegression()</pre></div></div></div></div></div></div></div></div></div></div></div></div>
+              predictor=None, random_state=None, ...)</pre></div></div></div></div></div></div></div></div><div class="sk-item"><div class="sk-parallel"><div class="sk-parallel-item"><div class="sk-item"><div class="sk-label-container"><div class="sk-label sk-toggleable"><label>final_estimator</label></div></div><div class="sk-serial"><div class="sk-item"><div class="sk-estimator sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="sk-estimator-id-10" type="checkbox"/><label class="sk-toggleable__label sk-toggleable__label-arrow" for="sk-estimator-id-10">LogisticRegression</label><div class="sk-toggleable__content"><pre>LogisticRegression()</pre></div></div></div></div></div></div></div></div></div></div></div></div>
 </div>
 </div>
 </div>
@@ -8167,7 +8171,7 @@ Percentage of Away Wins: 28.36%
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="Learning-Curves">Learning Curves<a class="anchor-link" href="#Learning-Curves">¶</a></h3>
+<h3 id="Learning-Curves">Learning Curves<a class="anchor-link" href="#Learning-Curves">¶</a></h3><p>Looking at the learning curves, the training score starts high and decreases as the training size increases. This is expected for the model as a smaller training set can be easier to overfit, leading to high accuracy on the training data. The training score stabilizes around 0.87 as the training size increases, meaning the model is learning more general patterns rather than memorizing the training data. The cross-validation score starts lower but stabilizes around 0.78, which is significantly lower than the training score. This gap means that there is a high variance problem, meaning the model is overfitting the training data.</p>
 </div>
 </div>
 </div>
@@ -8179,18 +8183,16 @@ Percentage of Away Wins: 28.36%
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">learning_curve</span>
-
-<span class="c1"># Generate learning curve</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># generate learning curve</span>
 <span class="n">train_sizes</span><span class="p">,</span> <span class="n">train_scores</span><span class="p">,</span> <span class="n">test_scores</span> <span class="o">=</span> <span class="n">learning_curve</span><span class="p">(</span><span class="n">stacking_clf</span><span class="p">,</span> <span class="n">train</span><span class="p">[</span><span class="n">predictors</span><span class="p">],</span> <span class="n">train</span><span class="p">[</span><span class="s1">'target'</span><span class="p">],</span> <span class="n">cv</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">train_sizes</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
 
-<span class="c1"># Calculate mean and standard deviation of training and test scores</span>
+<span class="c1"># calculate mean and standard deviation of training and test scores</span>
 <span class="n">train_scores_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">train_scores</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">train_scores_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">train_scores</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">test_scores_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">test_scores</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">test_scores_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">test_scores</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
-<span class="c1"># Plot learning curves</span>
+<span class="c1"># plot learning curves</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">train_sizes</span><span class="p">,</span> <span class="n">train_scores_mean</span><span class="p">,</span> <span class="s1">'o-'</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'r'</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'Training score'</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">train_sizes</span><span class="p">,</span> <span class="n">test_scores_mean</span><span class="p">,</span> <span class="s1">'o-'</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'g'</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'Cross-validation score'</span><span class="p">)</span>
@@ -8505,7 +8507,7 @@ weighted avg   0.794318  0.794737  0.794304  2280.000000
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># visualize confusion matrix</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># plot confusion matrix</span>
 <span class="n">conf_matrix</span> <span class="o">=</span> <span class="n">confusion_matrix</span><span class="p">(</span><span class="n">test</span><span class="p">[</span><span class="s2">"target"</span><span class="p">],</span> <span class="n">preds</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
 <span class="n">sns</span><span class="o">.</span><span class="n">heatmap</span><span class="p">(</span><span class="n">conf_matrix</span><span class="p">,</span> <span class="n">annot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">"d"</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">"Blues"</span><span class="p">,</span> <span class="n">xticklabels</span><span class="o">=</span><span class="p">[</span><span class="s1">'Loss/Draw'</span><span class="p">,</span> <span class="s1">'Win'</span><span class="p">],</span> <span class="n">yticklabels</span><span class="o">=</span><span class="p">[</span><span class="s1">'Loss/Draw'</span><span class="p">,</span> <span class="s1">'Win'</span><span class="p">])</span>
@@ -8537,7 +8539,8 @@ weighted avg   0.794318  0.794737  0.794304  2280.000000
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="ROC-Curve">ROC Curve<a class="anchor-link" href="#ROC-Curve">¶</a></h3>
+<h3 id="ROC-Curve">ROC Curve<a class="anchor-link" href="#ROC-Curve">¶</a></h3><p>The Receiver Operating Characteristic (ROC) Curve below is helpful to understand how the model is performing in terms of distinguishing between positive and negative classes. The ROC curve plots the true positive rate (TPR) against the false positive rate (FPR) at various thresholds. The curve bows toward the upper left corner indicating better performance meaning the TPR increases quicker than the FPR. While the TPR is already at 0.8, the FPR is just at 0.2.</p>
+<p>Regarding the area under the curve (AUC), a value of 0.5 suggests no discrimination (random performance), while an AUC of 1 indicates perfect discrimination. The AUC is 0.88 indicating the model has an 88% chance of correctly distinguishing between the two classes.</p>
 </div>
 </div>
 </div>
@@ -8549,14 +8552,12 @@ weighted avg   0.794318  0.794737  0.794304  2280.000000
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">roc_curve</span><span class="p">,</span> <span class="n">auc</span>
-
-<span class="c1"># Calculate ROC curve and AUC for the stacking classifier</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># calculate ROC curve and AUC</span>
 <span class="n">y_score</span> <span class="o">=</span> <span class="n">stacking_clf</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">test</span><span class="p">[</span><span class="n">predictors</span><span class="p">])[:,</span> <span class="mi">1</span><span class="p">]</span>
 <span class="n">fpr</span><span class="p">,</span> <span class="n">tpr</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">roc_curve</span><span class="p">(</span><span class="n">test</span><span class="p">[</span><span class="s1">'target'</span><span class="p">],</span> <span class="n">y_score</span><span class="p">)</span>
 <span class="n">roc_auc</span> <span class="o">=</span> <span class="n">auc</span><span class="p">(</span><span class="n">fpr</span><span class="p">,</span> <span class="n">tpr</span><span class="p">)</span>
 
-<span class="c1"># Plot ROC curve</span>
+<span class="c1"># plot ROC curve</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">fpr</span><span class="p">,</span> <span class="n">tpr</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'darkorange'</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">'ROC curve (area = </span><span class="si">{</span><span class="n">roc_auc</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">)'</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">'navy'</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">'--'</span><span class="p">)</span>
@@ -8591,7 +8592,7 @@ weighted avg   0.794318  0.794737  0.794304  2280.000000
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="Precision-Recall-Curve">Precision-Recall Curve<a class="anchor-link" href="#Precision-Recall-Curve">¶</a></h3>
+<h3 id="Precision-Recall-Curve">Precision-Recall Curve<a class="anchor-link" href="#Precision-Recall-Curve">¶</a></h3><p>The Precision-Recall Curve below is particularly helpful for understanding the classifier's performance, especially when class distribution is imbalanced. We see a relatively balances curve, with high precision at low recall values but as it tries to identify more positives, it also starts to capture more false positives.</p>
 </div>
 </div>
 </div>
@@ -8603,12 +8604,10 @@ weighted avg   0.794318  0.794737  0.794304  2280.000000
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">precision_recall_curve</span>
-
-<span class="c1"># Calculate precision-recall curve</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># calculate precision-recall curve</span>
 <span class="n">precision</span><span class="p">,</span> <span class="n">recall</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">precision_recall_curve</span><span class="p">(</span><span class="n">test</span><span class="p">[</span><span class="s1">'target'</span><span class="p">],</span> <span class="n">y_score</span><span class="p">)</span>
 
-<span class="c1"># Plot precision-recall curve</span>
+<span class="c1"># plot precision-recall curve</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">recall</span><span class="p">,</span> <span class="n">precision</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'b'</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">'Recall'</span><span class="p">)</span>
@@ -8639,7 +8638,7 @@ weighted avg   0.794318  0.794737  0.794304  2280.000000
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="Calibration-Curve">Calibration Curve<a class="anchor-link" href="#Calibration-Curve">¶</a></h3>
+<h3 id="Calibration-Curve">Calibration Curve<a class="anchor-link" href="#Calibration-Curve">¶</a></h3><p>The Calibration Curve below is useful for understanding how well the predicted probabilities match the actual outcomes. The curve plots the fraction of positives against the mean predicted probability. The blue line closely follows the black dashed line of perfect calibration, indicating that the model's predictions are generally reliable. Minor deviations show the model is slightly under-confident at lower probabilities and slightly over-confident at higher probabilities, but overall, the predicted probabilities reflect true likelihoods accurately.</p>
 </div>
 </div>
 </div>
@@ -8651,12 +8650,10 @@ weighted avg   0.794318  0.794737  0.794304  2280.000000
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.calibration</span> <span class="kn">import</span> <span class="n">calibration_curve</span>
-
-<span class="c1"># Calculate calibration curve</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># calculate calibration curve</span>
 <span class="n">prob_true</span><span class="p">,</span> <span class="n">prob_pred</span> <span class="o">=</span> <span class="n">calibration_curve</span><span class="p">(</span><span class="n">test</span><span class="p">[</span><span class="s1">'target'</span><span class="p">],</span> <span class="n">y_score</span><span class="p">,</span> <span class="n">n_bins</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 
-<span class="c1"># Plot calibration curve</span>
+<span class="c1"># plot calibration curve</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">prob_pred</span><span class="p">,</span> <span class="n">prob_true</span><span class="p">,</span> <span class="s1">'s-'</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'Stacking Classifier'</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="s1">'k--'</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'Perfectly Calibrated'</span><span class="p">)</span>
@@ -8689,7 +8686,7 @@ weighted avg   0.794318  0.794737  0.794304  2280.000000
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="Distribution-of-Prediction-Errors">Distribution of Prediction Errors<a class="anchor-link" href="#Distribution-of-Prediction-Errors">¶</a></h3>
+<h3 id="Distribution-of-Prediction-Errors">Distribution of Prediction Errors<a class="anchor-link" href="#Distribution-of-Prediction-Errors">¶</a></h3><p>The Distribution of Prediction Errors plot below is useful for understanding the performance of the model in predicting win and loss/draw outcomes. The plot shows the frequency of prediction errors, with most errors concentrated around zero, indicating that the model's predictions are generally accurate. The high peak at zero suggests that a large number of predictions are accurate or have very low error. However, the presence of peaks at -1 and 1 indicates that there are some cases where the model's predictions are completely incorrect, predicting a win as a loss/draw or vice versa. Overall, the model demonstrates good predictive accuracy with some significant misclassifications.</p>
 </div>
 </div>
 </div>
@@ -8701,10 +8698,10 @@ weighted avg   0.794318  0.794737  0.794304  2280.000000
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Calculate prediction errors</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># calculate prediction errors</span>
 <span class="n">errors</span> <span class="o">=</span> <span class="n">test</span><span class="p">[</span><span class="s2">"target"</span><span class="p">]</span> <span class="o">-</span> <span class="n">preds</span>
 
-<span class="c1"># Plot the distribution of errors</span>
+<span class="c1"># plot distribution of errors</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
 <span class="n">sns</span><span class="o">.</span><span class="n">histplot</span><span class="p">(</span><span class="n">errors</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">kde</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">'Distribution of Prediction Errors'</span><span class="p">)</span>
@@ -8735,7 +8732,7 @@ weighted avg   0.794318  0.794737  0.794304  2280.000000
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="Model-Interpretation">Model Interpretation<a class="anchor-link" href="#Model-Interpretation">¶</a></h3><p>In terms of feature importance, the chart below highlights</p>
+<h3 id="Model-Interpretation">Model Interpretation<a class="anchor-link" href="#Model-Interpretation">¶</a></h3><p>The Feature Importances plot below is helpful for understanding which features contribute most to the model's predictions of win and loss/draw outcomes. The plot shows the importance of each feature, with 'home_form' and 'away_form' being the most significant, indicating that the recent performance of teams at home and away are the strongest predictors of match outcomes. Other features such as 'h/a' (home/away), 'opp' (opponent strength), and head-to-head statistics (wins, losses, draws) also play a role but to a lesser extent. The day of the match has the least importance. Overall, the model relies heavily on form-related metrics to predict match results.</p>
 </div>
 </div>
 </div>
@@ -8752,7 +8749,7 @@ weighted avg   0.794318  0.794737  0.794304  2280.000000
 <span class="n">features</span> <span class="o">=</span> <span class="n">predictors</span>
 <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">rf_importances</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
-<span class="c1"># plot</span>
+<span class="c1"># plot feature importances</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Feature Importances"</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">)),</span> <span class="n">rf_importances</span><span class="p">[</span><span class="n">indices</span><span class="p">],</span> <span class="n">align</span><span class="o">=</span><span class="s2">"center"</span><span class="p">)</span>
@@ -8783,7 +8780,7 @@ weighted avg   0.794318  0.794737  0.794304  2280.000000
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Practical-Application">Practical Application<a class="anchor-link" href="#Practical-Application">¶</a></h2><h3 id="Predicting-Match-Outcomes">Predicting Match Outcomes<a class="anchor-link" href="#Predicting-Match-Outcomes">¶</a></h3>
+<h2 id="Practical-Application">Practical Application<a class="anchor-link" href="#Practical-Application">¶</a></h2><h3 id="Predicting-Match-Outcomes">Predicting Match Outcomes<a class="anchor-link" href="#Predicting-Match-Outcomes">¶</a></h3><p>The developed model can be used to predict the outcomes of matches, providing valuable insights for sports analysts, betting companies, and football enthusiasts more generally. The function <code>predict_match</code> below can be employed to predict the result of a specfic match.</p>
 </div>
 </div>
 </div>
@@ -8825,10 +8822,22 @@ weighted avg   0.794318  0.794737  0.794304  2280.000000
     
     <span class="n">stacking_clf</span> <span class="o">=</span> <span class="n">joblib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span>
     <span class="n">prediction</span> <span class="o">=</span> <span class="n">stacking_clf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">input_data</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">result_mapping</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="s1">'Home Win'</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span> <span class="s1">'Loss/Draw'</span><span class="p">}</span>
+    <span class="n">result_mapping</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="s1">'Win'</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span> <span class="s1">'Loss/Draw'</span><span class="p">}</span>
     <span class="k">return</span> <span class="n">result_mapping</span><span class="p">[</span><span class="n">prediction</span><span class="p">]</span>
 </pre></div>
 </div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p>As an example, we'll use my favorite team Chelsea and Newcastle Utd. We see below that the predicted outcome for Chelsea is a win meaning that historically speaking, Chelsea have the advantage over Newcastle Utd. The outcomes can either be Win or Loss/Draw as discussed previously.</p>
+<p>One note that is important to keep in mind is that when using the function, the team name has to be the exact name in the data since it's a string value.</p>
 </div>
 </div>
 </div>
@@ -8840,12 +8849,12 @@ weighted avg   0.794318  0.794737  0.794304  2280.000000
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Example usage</span>
-<span class="n">home_team</span> <span class="o">=</span> <span class="s1">'Liverpool'</span>
-<span class="n">away_team</span> <span class="o">=</span> <span class="s1">'Manchester Utd'</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># example prediction</span>
+<span class="n">home_team</span> <span class="o">=</span> <span class="s1">'Chelsea'</span>
+<span class="n">away_team</span> <span class="o">=</span> <span class="s1">'Newcastle Utd'</span>
 <span class="n">prediction</span> <span class="o">=</span> <span class="n">predict_match</span><span class="p">(</span><span class="n">home_team</span><span class="p">,</span> <span class="n">away_team</span><span class="p">)</span>
 
-<span class="c1"># Detailed Output</span>
+<span class="c1"># output</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Match Prediction:"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Home Team: </span><span class="si">{</span><span class="n">home_team</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Away Team: </span><span class="si">{</span><span class="n">away_team</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -8863,9 +8872,9 @@ weighted avg   0.794318  0.794737  0.794304  2280.000000
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>Match Prediction:
-  Home Team: Liverpool
-  Away Team: Manchester Utd
-  Predicted Outcome for Liverpool: Loss/Draw
+  Home Team: Chelsea
+  Away Team: Newcastle Utd
+  Predicted Outcome for Chelsea: Win
 </pre>
 </div>
 </div>
@@ -8878,7 +8887,29 @@ weighted avg   0.794318  0.794737  0.794304  2280.000000
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Conclusion">Conclusion<a class="anchor-link" href="#Conclusion">¶</a></h2>
+<h2 id="Conclusion">Conclusion<a class="anchor-link" href="#Conclusion">¶</a></h2><p>The football match outcome prediction model demonstrates a strong overall performance, effectively predicting match results based on various input features, however could use future improvements.</p>
+<p>The learning curves reveal that the model benefits from the training data, with a stable performance indicating some overfitting, yet providing consistent results. The classification report highlights the model's ability to balance precision and recall across both outcome categories, effectively predicting both win and loss/draw outcomes. The confusion matrix supports these findings, showing a significant number of correct predictions with some areas for improvement. The ROC curve further emphasizes the model's capability to distinguish between positive and negative classes, showcasing a high area under the curve. The precision-recall curve illustrates a good balance between precision and recall, while the calibration curve confirms that the predicted probabilities are well-aligned with actual outcomes. The distribution of prediction errors shows that most predictions are accurate, although there are some instances of significant errors.</p>
+<p>In terms of future improvements, these are some to keep in mind:</p>
+<ul>
+<li>Address Overfitting<ul>
+<li>Implementing regularization techniques or simplifying the model could help mitigate overfitting, improving the model's generalization to unseen data.</li>
+</ul>
+</li>
+<li>Feature Engineering<ul>
+<li>Exploring additional features, such as player statistics, weather conditions, or more detailed team dynamics, could provide deeper insights and enhance model accuracy.</li>
+</ul>
+</li>
+<li>Model Ensemble<ul>
+<li>Combining the stacking classifier with other ensemble methods or incorporating different base models might improve predictive performance and reduce bias.</li>
+</ul>
+</li>
+<li>Real-time Updates<ul>
+<li>Implementing a system to update the model with real-time data can ensure that the predictions remain relevant and accurate as new matches are played.</li>
+<li>The 2023-2024 season data is available so it could be useful to employ the model and see how it performed.</li>
+</ul>
+</li>
+</ul>
+<p>Overall, this project was incredibly enjoyable and a great learning experience. I am incredibly eager to keep pushing the limits of the model and see how far it can go.</p>
 </div>
 </div>
 </div>
